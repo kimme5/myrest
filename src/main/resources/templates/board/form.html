@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="fragments/common :: head('게시판')">
+</head>
+<body>
+  <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top" th:replace="fragments/common :: menu('board')">
+  </nav>
+  <div class="container">
+    <h2>게시판</h2>
+    <form action="#" th:action="@{/board/form}" th:object="${board}" method="post">
+      <!-- 해당 input 태그에 board.id 값을 넣어놓고 "확인" 버튼을 클릭하여 "/board/form" 으로
+           데이터가 넘어갈 때 id가 없으면 insert, 있으면 update가 되도록 함 -->
+      <input type="text" id="boardId" th:field="*{id}">
+      <div class="form-group">
+        <label for="title"> 제목 </label>
+        <input type="text" class="form-control"
+               th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'" id="title" th:field="*{title}" />
+        <div class="invalid-feedback" th:if="${#fields.hasErrors('title')}" th:errors="*{title}">
+          제목 에러 메세지
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="content"> 글 내용 </label>
+        <textarea class="form-control" id="content" rows="3" th:field="*{content}"
+                  th:classappend="${#fields.hasErrors('content')} ? 'is-invalid'" ></textarea>
+        <div class="invalid-feedback" th:if="${#fields.hasErrors('content')}" th:errors="*{content}">
+          제목 에러 메세지
+        </div>
+      </div>
+      <div class="text-right">
+        <a class="btn btn-primary" th:href="@{/board/list}" >취소</a>
+        <!--
+          - th:onclick="|deleteBoard(*{id})|" 에서 id를 인지하지 못하는 error 가 계속 발생함
+          - thymeleaf 3.0.10 th:onclick thymeleaf variable not working ->
+          - th:attr="onclick=|deleteBoard('*{id}')|" 형태로 작성했으나, 여전히 id를 인지하지 못하는 error 여전히 발생함
+          - (2023-03-20)
+         -->
+        <button type="button" class="btn btn-primary"
+                sec:authorize="hasRole('ROLE_ADMIN')" onclick="deleteBoard();">삭제</button>
+        <!--    sec:authorize="hasRole('ROLE_ADMIN')" th:attr="onclick=|deleteBoard('${board.id}')|">삭제</button>-->
+
+        <button type="submit" class="btn btn-primary">확인</button>
+      </div>
+    </form>
+  </div>
+  <script th:inline="javascript">
+    function deleteBoard() {
+      id = document.getElementById("boardId").value;
+      alert(id);
+      $.ajax({
+        type: "delete",
+        url: "/api/boards/" + id,
+        success: function(res) {
+          console.log("요청 성공 : ", res);
+          alert("삭제됐습니다.");
+          window.location.href="/board/list";
+        },
+        error: function(err) {
+          console.log("요청 실패:", err);
+        }
+      });
+    }
+  </script>
+  <footer th:replace="fragments/common :: footer"></footer>
+</body>
+</html>
